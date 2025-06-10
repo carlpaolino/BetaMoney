@@ -52,6 +52,7 @@ export const isValidRequired = (value: string): boolean => {
 export const validateNewRequest = (data: {
   amount: string;
   description: string;
+  category: string;
   file: File | null;
 }): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
@@ -62,6 +63,10 @@ export const validateNewRequest = (data: {
 
   if (!isValidAmount(data.amount)) {
     errors.push('Please enter a valid amount');
+  }
+
+  if (!isValidRequired(data.category)) {
+    errors.push('Committee is required');
   }
 
   if (!data.file) {

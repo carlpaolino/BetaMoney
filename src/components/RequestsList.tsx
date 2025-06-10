@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { FirestoreService } from '../services/firestoreService';
+import { LocalStorageService } from '../services/localStorageService';
 import { ReimbursementRequest, RequestStatus, UserRole } from '../types';
 import { formatCurrency, formatDateShort } from '../utils/formatters';
 
@@ -19,18 +19,27 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
   useEffect(() => {
     if (!currentUser) return;
 
-    setIsLoading(true);
-
-    // Set up real-time listener
-    const unsubscribe = FirestoreService.subscribeToRequests(
-      (updatedRequests) => {
-        setRequests(updatedRequests);
+    const loadRequests = () => {
+      setIsLoading(true);
+      
+      try {
+        const allRequests = currentUser.role === UserRole.OWNER 
+          ? LocalStorageService.getAllRequests()
+          : LocalStorageService.getRequestsForUser(currentUser.id);
+        
+        setRequests(allRequests);
+      } catch (error) {
+        console.error('Error loading requests:', error);
+      } finally {
         setIsLoading(false);
-      },
-      currentUser.role === UserRole.GUEST ? currentUser.id : undefined
-    );
+      }
+    };
 
-    return () => unsubscribe();
+    loadRequests();
+
+    // Set up polling to refresh data every 5 seconds (simulates real-time updates)
+    const interval = setInterval(loadRequests, 5000);
+    return () => clearInterval(interval);
   }, [currentUser]);
 
   useEffect(() => {
@@ -45,8 +54,6 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
   const handleFilterChange = (filter: RequestStatus | null) => {
     setSelectedFilter(filter);
   };
-
-
 
   const getNavigationTitle = () => {
     return currentUser?.role === UserRole.OWNER ? 'All Requests' : 'My Requests';
@@ -85,19 +92,19 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
               className={`filter-chip ${selectedFilter === null ? 'active' : ''}`}
               onClick={() => handleFilterChange(null)}
             >
-              All
+              All ({requests.length})
             </button>
             <button
               className={`filter-chip ${selectedFilter === RequestStatus.PENDING ? 'active' : ''}`}
               onClick={() => handleFilterChange(RequestStatus.PENDING)}
             >
-              Pending
+              Pending ({requests.filter(r => r.status === RequestStatus.PENDING).length})
             </button>
             <button
               className={`filter-chip ${selectedFilter === RequestStatus.APPROVED ? 'active' : ''}`}
               onClick={() => handleFilterChange(RequestStatus.APPROVED)}
             >
-              Approved
+              Approved ({requests.filter(r => r.status === RequestStatus.APPROVED).length})
             </button>
           </div>
         )}
@@ -108,7 +115,10 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
             <div className="empty-state-icon">📄</div>
             <h3>No requests found</h3>
             {currentUser?.role === UserRole.GUEST && (
-              <p>Tap the + button to create your first reimbursement request</p>
+              <p>Click the + button to create your first reimbursement request</p>
+            )}
+            {currentUser?.role === UserRole.OWNER && (
+              <p>No requests match the current filter</p>
             )}
           </div>
         ) : (
@@ -126,6 +136,9 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
                       <div className="request-meta">User ID: {request.userId}</div>
                     )}
                     <div className="request-meta">{formatDateShort(request.createdAt)}</div>
+                    {request.category && (
+                      <div className="request-meta">Category: {request.category}</div>
+                    )}
                   </div>
                   <div>
                     <div className="request-amount">{formatCurrency(request.amount)}</div>

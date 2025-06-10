@@ -1,0 +1,16 @@
+[debug] [2025-06-10T04:19:28.242Z] ----------------------------------------------------------------------
+[debug] [2025-06-10T04:19:28.244Z] Command:       /opt/homebrew/Cellar/node/24.1.0/bin/node /opt/homebrew/bin/firebase login
+[debug] [2025-06-10T04:19:28.244Z] CLI Version:   14.6.0
+[debug] [2025-06-10T04:19:28.244Z] Platform:      darwin
+[debug] [2025-06-10T04:19:28.244Z] Node Version:  v24.1.0
+[debug] [2025-06-10T04:19:28.244Z] Time:          Tue Jun 10 2025 00:19:28 GMT-0400 (Eastern Daylight Time)
+[debug] [2025-06-10T04:19:28.244Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-10T04:19:28.245Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] i  Firebase CLI integrates with Gemini in Firebase API to provide assistant features. Learn more about using Gemini in Firebase and how we train our models: https://firebase.google.com/docs/gemini-in-firebase/set-up-gemini#required-permissions 
+[debug] [2025-06-10T04:19:28.444Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-06-10T04:19:28.444Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[warn] ⚠  Unable to fetch the CLI MOTD and remote config. This is not a fatal error, but may indicate an issue with your network connection. 
+[debug] [2025-06-10T04:19:28.444Z] Failed to fetch MOTD Error: EACCES: permission denied, mkdir '/Users/carl/.config/configstore'
+You don't have access to this file.
+

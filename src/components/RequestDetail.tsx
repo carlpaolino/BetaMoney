@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { FirestoreService } from '../services/firestoreService';
+import { LocalStorageService } from '../services/localStorageService';
 import { ReimbursementRequest, RequestStatus, UserRole } from '../types';
+import { formatCurrency, formatDateLong } from '../utils/formatters';
 
 interface RequestDetailProps {
   request: ReimbursementRequest;
@@ -21,7 +22,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onReque
     setIsUpdating(true);
 
     try {
-      await FirestoreService.updateRequestStatus(currentRequest.id, newStatus);
+      LocalStorageService.updateRequestStatus(currentRequest.id, newStatus);
       const updatedRequest = { ...currentRequest, status: newStatus, updatedAt: new Date() };
       setCurrentRequest(updatedRequest);
       onRequestUpdated(updatedRequest);
@@ -30,23 +31,6 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onReque
     } finally {
       setIsUpdating(false);
     }
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    }).format(date);
-  };
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
   };
 
   return (
@@ -69,11 +53,11 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onReque
                     {currentRequest.description}
                   </h2>
                   <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                    {formatDate(currentRequest.createdAt)}
+                    {formatDateLong(currentRequest.createdAt)}
                   </p>
                 </div>
                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--beta-navy)' }}>
-                  {formatAmount(currentRequest.amount)}
+                  {formatCurrency(currentRequest.amount)}
                 </div>
               </div>
               <div>
@@ -92,7 +76,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onReque
               <h3 style={{ marginBottom: '16px' }}>Details</h3>
               <div className="detail-row">
                 <span className="detail-label">Amount</span>
-                <span className="detail-value">{formatAmount(currentRequest.amount)}</span>
+                <span className="detail-value">{formatCurrency(currentRequest.amount)}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Description</span>
@@ -106,8 +90,14 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onReque
               )}
               <div className="detail-row">
                 <span className="detail-label">Submitted</span>
-                <span className="detail-value">{formatDate(currentRequest.createdAt)}</span>
+                <span className="detail-value">{formatDateLong(currentRequest.createdAt)}</span>
               </div>
+              {currentRequest.updatedAt.getTime() !== currentRequest.createdAt.getTime() && (
+                <div className="detail-row">
+                  <span className="detail-label">Last Updated</span>
+                  <span className="detail-value">{formatDateLong(currentRequest.updatedAt)}</span>
+                </div>
+              )}
               {currentUser?.role === UserRole.OWNER && (
                 <div className="detail-row">
                   <span className="detail-label">User ID</span>
@@ -166,6 +156,9 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onReque
                     )}
                   </button>
                 </div>
+                <p style={{ fontSize: '14px', color: 'var(--text-light)', marginTop: '8px' }}>
+                  Status changes are saved automatically to your browser's local storage.
+                </p>
               </div>
             )}
           </div>

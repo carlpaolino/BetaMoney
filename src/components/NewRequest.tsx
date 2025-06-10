@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { FirestoreService } from '../services/firestoreService';
+import { LocalStorageService } from '../services/localStorageService';
 import { ReimbursementRequest, RequestStatus } from '../types';
+import { validateNewRequest } from '../utils/validators';
+import { BETA_COMMITTEES } from '../constants';
 
 interface NewRequestProps {
   onClose: () => void;
@@ -21,18 +23,6 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB');
-        return;
-      }
-
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        setError('Please select an image file');
-        return;
-      }
-
       setSelectedFile(file);
       setError(null);
 
@@ -47,9 +37,16 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
 
     if (!currentUser || !selectedFile) return;
 
-    const amountValue = parseFloat(amount);
-    if (isNaN(amountValue) || amountValue <= 0) {
-      setError('Please enter a valid amount');
+    // Validate form data
+    const validation = validateNewRequest({
+      amount,
+      description,
+      category,
+      file: selectedFile
+    });
+
+    if (!validation.isValid) {
+      setError(validation.errors.join(', '));
       return;
     }
 
@@ -58,26 +55,26 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
 
     try {
       // Generate request ID
-      const requestId = FirestoreService.generateRequestId();
+      const requestId = LocalStorageService.generateId();
 
-      // Upload image first
-      const imageURL = await FirestoreService.uploadImage(selectedFile, requestId);
+      // Convert image to base64 for storage
+      const imageURL = await LocalStorageService.saveImage(selectedFile);
 
       // Create request object
       const request: ReimbursementRequest = {
         id: requestId,
         userId: currentUser.id,
-        amount: amountValue,
+        amount: parseFloat(amount),
         description,
-        category: category || undefined,
+        category,
         status: RequestStatus.PENDING,
         imageURL,
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      // Save to Firestore
-      await FirestoreService.saveRequest(request);
+      // Save to localStorage
+      LocalStorageService.saveRequest(request);
 
       onSuccess();
     } catch (err) {
@@ -90,6 +87,7 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
   const isFormValid = () => {
     return amount && 
            description && 
+           category &&
            selectedFile && 
            parseFloat(amount) > 0 && 
            !isSubmitting;
@@ -148,14 +146,20 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Category (Optional)</label>
-                <input
-                  type="text"
+                <label className="form-label">Committee *</label>
+                <select
                   className="form-input"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  placeholder="Food, Transportation, Supplies, etc."
-                />
+                  required
+                >
+                  <option value="">Select a committee</option>
+                  {BETA_COMMITTEES.map(committee => (
+                    <option key={committee} value={committee}>
+                      {committee}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">
@@ -174,6 +178,9 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
                         onClick={() => {
                           setSelectedFile(null);
                           setPreviewUrl(null);
+                          if (previewUrl) {
+                            URL.revokeObjectURL(previewUrl);
+                          }
                         }}
                       >
                         Change Photo
@@ -183,8 +190,8 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
                     <label htmlFor="file-input" style={{ cursor: 'pointer', display: 'block' }}>
                       <div className="upload-icon">📷</div>
                       <h4>Add Receipt Photo</h4>
-                      <p>Click to upload or drag and drop</p>
-                      <p style={{ fontSize: '12px', color: '#999' }}>PNG, JPG up to 5MB</p>
+                      <p>Click to upload an image</p>
+                      <p style={{ fontSize: '12px', color: '#999' }}>PNG, JPG, WebP up to 5MB</p>
                     </label>
                   )}
                   <input

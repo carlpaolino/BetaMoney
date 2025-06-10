@@ -18,12 +18,6 @@
 .env.test.local
 .env.production.local
 
-# Firebase
-.firebaserc
-firebase-debug.log
-firebase-debug.*.log
-.firebase/
-
 # Environment variables
 .env
 
@@ -40,3 +34,6 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Vercel
+.vercel

@@ -1,33 +1,22 @@
-import { 
-  signInWithEmailAndPassword, 
-  signInAnonymously, 
-  signOut,
-  User as FirebaseUser
-} from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
 import { User, UserRole } from '../types';
 import { TREASURER_CREDENTIALS } from '../constants';
+import { LocalStorageService } from './localStorageService';
 
 export class AuthService {
-  // Guest sign-in (simplified - in production would use email link)
+  // Guest sign-in (simplified - just creates a local user)
   static async signInAsGuest(email: string, name: string): Promise<User> {
     try {
-      // Create anonymous user for demo purposes
-      const result = await signInAnonymously(auth);
-      const firebaseUser = result.user;
-      
       // Create guest user profile
       const user: User = {
-        id: firebaseUser.uid,
+        id: LocalStorageService.generateId(),
         email,
         name,
         role: UserRole.GUEST,
         createdAt: new Date()
       };
       
-      // Save to Firestore
-      await this.saveUser(user);
+      // Save to localStorage
+      LocalStorageService.saveCurrentUser(user);
       
       return user;
     } catch (error) {
@@ -43,20 +32,17 @@ export class AuthService {
         throw new Error('Invalid treasurer credentials');
       }
       
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = result.user;
-      
-      // Create or get treasurer user profile
+      // Create treasurer user profile
       const user: User = {
-        id: firebaseUser.uid,
+        id: 'treasurer-001', // Fixed ID for treasurer
         email,
         name: 'Treasurer',
         role: UserRole.OWNER,
         createdAt: new Date()
       };
       
-      // Save to Firestore
-      await this.saveUser(user);
+      // Save to localStorage
+      LocalStorageService.saveCurrentUser(user);
       
       return user;
     } catch (error) {
@@ -67,45 +53,23 @@ export class AuthService {
   // Sign out
   static async signOutUser(): Promise<void> {
     try {
-      await signOut(auth);
+      LocalStorageService.clearCurrentUser();
     } catch (error) {
       throw new Error(`Failed to sign out: ${error}`);
     }
   }
   
-  // Get current user from Firestore
-  static async getCurrentUser(firebaseUser: FirebaseUser): Promise<User | null> {
+  // Get current user from localStorage
+  static async getCurrentUser(): Promise<User | null> {
     try {
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-      
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        return {
-          id: firebaseUser.uid,
-          email: data.email,
-          name: data.name,
-          role: data.role,
-          createdAt: data.createdAt.toDate()
-        };
-      }
-      
-      return null;
+      return LocalStorageService.getCurrentUser();
     } catch (error) {
       throw new Error(`Failed to get current user: ${error}`);
     }
   }
   
-  // Save user to Firestore
-  private static async saveUser(user: User): Promise<void> {
-    try {
-      await setDoc(doc(db, 'users', user.id), {
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        createdAt: user.createdAt
-      });
-    } catch (error) {
-      throw new Error(`Failed to save user: ${error}`);
-    }
+  // Check if user is authenticated
+  static isAuthenticated(): boolean {
+    return LocalStorageService.getCurrentUser() !== null;
   }
 } 

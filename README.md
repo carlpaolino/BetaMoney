@@ -1,254 +1,208 @@
-# BetaMoney Web App
+# BetaMoney - Beta Theta Pi Reimbursement Tracker
 
-BetaMoney is a simple reimbursement tracking web application designed for Beta Theta Pi fraternity chapters. Members can submit reimbursement requests with receipt photos, and treasurers can approve or mark them as pending with a single click.
+A simple, lightweight web app for Beta Theta Pi fraternity chapters to track reimbursement requests. Built with React and TypeScript, using local storage for data persistence.
 
-## Features
+## ✨ Features
 
-### For Members (Guests)
+### For Members
 - Quick sign-in with email and name
 - Submit reimbursement requests with receipt photos
 - View personal request history
-- Real-time status updates (Pending/Approved)
+- Real-time status updates
 
-### For Treasurers (Owners)
+### For Treasurers
 - Secure login with credentials
 - View all chapter requests
-- Filter requests by status (All/Pending/Approved)
+- Filter requests by status (Pending/Approved)
 - One-click status updates
 - Full-screen receipt viewing
 
-## Demo Credentials
+## 🚀 Demo Credentials
 
 **Treasurer Login:**
 - Email: `treasurer@betathetapi.com`
 - Password: `BetaMoney2024!`
 
 **Member Login:**
-- Any email and name (creates anonymous account)
+- Any email and name (creates a guest account)
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 - **Frontend**: React 18 with TypeScript
 - **Styling**: Pure CSS with CSS Variables
-- **Backend**: Firebase (Auth, Firestore, Storage)
-- **Build Tool**: Create React App
-- **Deployment**: Can be deployed to any static hosting service
+- **Storage**: Browser Local Storage (no backend required!)
+- **Build**: Create React App
+- **Deployment**: Vercel (or any static hosting)
 
-## Setup Instructions
+## ⚡ Quick Start
 
-### Prerequisites
-- Node.js 16+ and npm
-- Firebase account
-
-### 1. Install Dependencies
+### 1. Clone and Install
 ```bash
-cd betamoney-web
+git clone https://github.com/your-username/BetaMoney.git
+cd BetaMoney
 npm install
 ```
 
-### 2. Firebase Setup
-
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project (or use existing)
-3. Add a web app to your project
-4. Copy your Firebase configuration
-5. Update `src/services/firebase.ts` with your config:
-
-```typescript
-const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "your-app-id"
-};
-```
-
-### 3. Firebase Configuration
-
-Enable the following services in your Firebase project:
-
-#### Authentication
-- Go to Authentication → Sign-in method
-- Enable "Email/Password"
-- Enable "Anonymous"
-
-#### Firestore Database
-- Go to Firestore Database
-- Create database in test mode
-- Set up these security rules:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Users can read/write their own user document
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Requests can be read by the user who created them or owners
-    match /requests/{requestId} {
-      allow read: if request.auth != null && 
-        (resource.data.userId == request.auth.uid || 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner');
-      
-      // Only the user who created the request can write to it initially
-      allow create: if request.auth != null && request.auth.uid == resource.data.userId;
-      
-      // Only owners can update status
-      allow update: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
-    }
-  }
-}
-```
-
-#### Storage
-- Go to Storage
-- Set up these security rules:
-
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /receipts/{requestId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-  }
-}
-```
-
-### 4. Treasurer Account Setup
-
-In Firebase Authentication:
-1. Go to Authentication → Users
-2. Add user with email: `treasurer@betathetapi.com` and password: `BetaMoney2024!`
-3. Note the UID
-4. In Firestore, create a document in the `users` collection:
-   - Document ID: `[the UID from step 3]`
-   - Fields:
-     ```
-     email: "treasurer@betathetapi.com"
-     name: "Treasurer"
-     role: "owner"
-     createdAt: [current timestamp]
-     ```
-
-### 5. Run the Application
-
+### 2. Run Locally
 ```bash
 npm start
 ```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The app will open at `http://localhost:3000`
-
-### 6. Build for Production
-
+### 3. Build for Production
 ```bash
 npm run build
 ```
 
-This creates a `build` folder with optimized production files.
+## 🌐 Deploy to Vercel (Recommended)
 
-## Deployment
-
-### Firebase Hosting (Recommended)
+### Option 1: Deploy with Vercel CLI
 ```bash
-npm install -g firebase-tools
-firebase login
-firebase init hosting
-npm run build
-firebase deploy
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy (first time)
+vercel
+
+# Follow the prompts:
+# - Set up and deploy? Y
+# - Which scope? (your account)
+# - Link to existing project? N
+# - Project name? betamoney (or your choice)
+# - Directory? ./ 
+# - Want to override settings? N
+
+# Deploy updates
+vercel --prod
 ```
 
-### Other Hosting Services
-The app can be deployed to any static hosting service:
-- Netlify
-- Vercel
-- GitHub Pages
-- AWS S3 + CloudFront
+### Option 2: Deploy with GitHub Integration
+1. Push your code to GitHub
+2. Go to [vercel.com](https://vercel.com)
+3. Click "New Project"
+4. Import your GitHub repository
+5. Deploy with default settings
+6. Your app will be live at `https://your-project.vercel.app`
 
-Simply upload the contents of the `build` folder.
+## 🔧 Other Deployment Options
 
-## Project Structure
+### Netlify
+1. Run `npm run build`
+2. Drag the `build` folder to [netlify.com/drop](https://app.netlify.com/drop)
+
+### GitHub Pages
+```bash
+npm install --save-dev gh-pages
+
+# Add to package.json scripts:
+"homepage": "https://yourusername.github.io/BetaMoney",
+"predeploy": "npm run build",
+"deploy": "gh-pages -d build"
+
+# Deploy
+npm run deploy
+```
+
+## 📁 Project Structure
 
 ```
 src/
-├── components/
-│   ├── Login.tsx              # Authentication UI
-│   ├── RequestsList.tsx       # Main list view
-│   ├── NewRequest.tsx         # Request submission form
-│   └── RequestDetail.tsx      # Detailed view with approval
-├── hooks/
-│   └── useAuth.ts             # Authentication hook
+├── components/           # React components
+│   ├── Login.tsx        # Authentication UI
+│   ├── RequestsList.tsx # Main dashboard
+│   ├── NewRequest.tsx   # Request form
+│   └── RequestDetail.tsx# Detailed view
 ├── services/
-│   ├── firebase.ts            # Firebase configuration
-│   ├── authService.ts         # Authentication logic
-│   └── firestoreService.ts    # Database operations
+│   ├── authService.ts   # Authentication logic
+│   └── localStorageService.ts # Data persistence
+├── hooks/
+│   └── useAuth.ts       # Auth state management
+├── utils/               # Helper functions
+│   ├── formatters.ts    # Date/currency formatting
+│   └── validators.ts    # Form validation
 ├── types/
-│   └── index.ts               # TypeScript types
-├── styles/
-│   └── App.css                # All styles
-└── App.tsx                    # Main app component
+│   └── index.ts         # TypeScript definitions
+├── constants/
+│   └── index.ts         # App constants
+└── styles/
+    └── App.css          # All styling
 ```
 
-## Key Features
+## 🎨 Customization
 
-- **Real-time Updates**: Uses Firestore listeners for live data
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Image Upload**: Direct upload to Firebase Storage
-- **Role-based Access**: Different UI for members vs treasurers
-- **Modern UI**: Clean design with Beta Theta Pi branding
-- **TypeScript**: Full type safety throughout the app
-
-## Customization
-
-### Branding
-Update CSS variables in `src/styles/App.css`:
-```css
-:root {
-  --beta-navy: #003366;
-  --beta-crimson: #B31B1B;
-}
-```
-
-### Treasurer Credentials
-Update in `src/services/authService.ts`:
+### Update Branding
+Edit `src/constants/index.ts`:
 ```typescript
-const TREASURER_EMAIL = 'your-treasurer@email.com';
-const TREASURER_PASSWORD = 'YourSecurePassword';
+export const BETA_COLORS = {
+  NAVY: '#003366',      // Your primary color
+  CRIMSON: '#B31B1B',   // Your accent color
+  // ...
+};
 ```
 
-## Troubleshooting
+### Change Treasurer Credentials
+Edit `src/constants/index.ts`:
+```typescript
+export const TREASURER_CREDENTIALS = {
+  EMAIL: 'your-treasurer@email.com',
+  PASSWORD: 'YourSecurePassword'
+};
+```
 
-### Common Issues
+## 📱 How It Works
 
-1. **Firebase not configured**: Ensure firebase config is correct
-2. **Authentication fails**: Check Firebase Auth is enabled
-3. **Permission denied**: Verify Firestore security rules
-4. **Images not uploading**: Check Storage rules and file size limits
+### Data Storage
+- **Local Storage**: All data is stored in the browser's local storage
+- **No Backend**: No server or database required
+- **Per-Device**: Data is specific to each browser/device
+- **Demo Data**: Includes sample requests for demonstration
 
-### Development
-- Check browser console for errors
-- Use Firebase Console to monitor data
-- Test with different user roles
+### User Roles
+- **Guests**: Can create and view their own requests
+- **Treasurers**: Can view all requests and change statuses
 
-## Future Enhancements
+### Image Handling
+- Receipt images are converted to base64 and stored locally
+- Full-screen viewing with modal overlay
+- File size validation (max 5MB)
 
-- Push notifications for status changes
-- Bulk approval functionality
-- Export/reporting features
-- Mobile app (React Native)
-- Receipt text recognition (OCR)
-- Integration with accounting software
+## 🔒 Security Notes
 
-## Support
+- This is a **demo/prototype application**
+- Data is stored locally in the browser (not shared between devices)
+- For production use, consider implementing proper authentication and a backend database
+- Treasurer credentials are hard-coded for demonstration purposes
 
-For technical support, check the Firebase documentation or create an issue in the repository.
+## 🎯 Perfect For
 
-## License
+- ✅ Chapter demonstrations and prototyping
+- ✅ Small chapters with simple needs
+- ✅ Quick deployment without backend setup
+- ✅ Local/offline usage scenarios
+
+## 🚫 Limitations
+
+- Data is not synchronized between devices
+- No real user authentication (demo only)
+- Limited to browser storage capacity
+- No data backup/restore features
+
+## 🔮 Future Enhancements
+
+For production use, consider:
+- Real user authentication system
+- Cloud database (Firebase, Supabase, etc.)
+- Multi-device synchronization
+- Data export/backup features
+- Push notifications
+- Receipt OCR text recognition
+
+## 📄 License
 
 This project is designed specifically for Beta Theta Pi fraternity chapters.
+
+---
+
+**🏛️ Built with pride for Beta Theta Pi** 
+
+*Men of Principle*

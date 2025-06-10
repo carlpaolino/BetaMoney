@@ -35,7 +35,18 @@ const Login: React.FC = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <div className="beta-logo">🏛️</div>
+          <div className="beta-logo">
+            <img 
+              src="/beta-coat-of-arms.png" 
+              alt="Beta Theta Pi Coat of Arms" 
+              style={{ 
+                width: '160px', 
+                height: '160px', 
+                objectFit: 'contain',
+                filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.1))'
+              }} 
+            />
+          </div>
           <h1 className="beta-title">BETA THETA PI</h1>
           <p className="app-title">BetaMoney</p>
         </div>

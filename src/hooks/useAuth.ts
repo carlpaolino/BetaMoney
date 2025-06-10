@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../services/firebase';
 import { AuthService } from '../services/authService';
+import { LocalStorageService } from '../services/localStorageService';
 import { User } from '../types';
 
 export const useAuth = () => {
@@ -11,34 +10,33 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // Initialize demo data on first load
+    LocalStorageService.initializeDemoData();
+    
+    // Check for existing user in localStorage
+    const checkAuthState = async () => {
       setIsLoading(true);
       setError(null);
 
-      if (firebaseUser) {
-        try {
-          const user = await AuthService.getCurrentUser(firebaseUser);
-          if (user) {
-            setCurrentUser(user);
-            setIsAuthenticated(true);
-          } else {
-            setCurrentUser(null);
-            setIsAuthenticated(false);
-          }
-        } catch (err) {
-          setError('Failed to load user data');
+      try {
+        const user = await AuthService.getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+        } else {
           setCurrentUser(null);
           setIsAuthenticated(false);
         }
-      } else {
+      } catch (err) {
+        setError('Failed to load user data');
         setCurrentUser(null);
         setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    checkAuthState();
   }, []);
 
   const signInAsGuest = async (email: string, name: string) => {

@@ -10,6 +10,26 @@ export const BETA_COLORS = {
   WHITE: '#ffffff'
 } as const;
 
+// Beta Theta Pi Committees
+export const BETA_COMMITTEES = [
+  'Risk',
+  'Social',
+  'House',
+  'Brotherhood',
+  'Rush',
+  'Technology',
+  'Pledge Ed',
+  'External Relations',
+  'Finance',
+  'Conventions',
+  'Athletics',
+  'President',
+  'Historian',
+  'Table',
+  'Ritual',
+  'Gym'
+] as const;
+
 // Authentication
 export const TREASURER_CREDENTIALS = {
   EMAIL: 'treasurer@betathetapi.com',
