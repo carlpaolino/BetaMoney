@@ -9,17 +9,35 @@ const STORAGE_KEYS = {
 export class LocalStorageService {
   // User Management
   static saveCurrentUser(user: User): void {
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    console.log('LocalStorageService: saveCurrentUser called with:', user);
+    try {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+      console.log('LocalStorageService: User saved successfully');
+    } catch (error) {
+      console.error('LocalStorageService: Error saving user:', error);
+      throw error;
+    }
   }
 
   static getCurrentUser(): User | null {
-    const userData = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-    if (!userData) return null;
-    
-    const user = JSON.parse(userData);
-    // Convert date strings back to Date objects
-    user.createdAt = new Date(user.createdAt);
-    return user;
+    console.log('LocalStorageService: getCurrentUser called');
+    try {
+      const userData = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+      console.log('LocalStorageService: Raw user data from localStorage:', userData);
+      if (!userData) {
+        console.log('LocalStorageService: No user data found');
+        return null;
+      }
+      
+      const user = JSON.parse(userData);
+      // Convert date strings back to Date objects
+      user.createdAt = new Date(user.createdAt);
+      console.log('LocalStorageService: Parsed user object:', user);
+      return user;
+    } catch (error) {
+      console.error('LocalStorageService: Error getting user:', error);
+      return null;
+    }
   }
 
   static clearCurrentUser(): void {
@@ -41,16 +59,29 @@ export class LocalStorageService {
   }
 
   static getAllRequests(): ReimbursementRequest[] {
-    const requestsData = localStorage.getItem(STORAGE_KEYS.REQUESTS);
-    if (!requestsData) return [];
-    
-    const requests = JSON.parse(requestsData);
-    // Convert date strings back to Date objects
-    return requests.map((req: any) => ({
-      ...req,
-      createdAt: new Date(req.createdAt),
-      updatedAt: new Date(req.updatedAt)
-    }));
+    console.log('LocalStorageService: getAllRequests called');
+    try {
+      const requestsData = localStorage.getItem(STORAGE_KEYS.REQUESTS);
+      console.log('LocalStorageService: Raw requests data from localStorage:', requestsData);
+      if (!requestsData) {
+        console.log('LocalStorageService: No requests data found, returning empty array');
+        return [];
+      }
+      
+      const requests = JSON.parse(requestsData);
+      console.log('LocalStorageService: Parsed requests:', requests);
+      // Convert date strings back to Date objects
+      const requestsWithDates = requests.map((req: any) => ({
+        ...req,
+        createdAt: new Date(req.createdAt),
+        updatedAt: new Date(req.updatedAt)
+      }));
+      console.log('LocalStorageService: Requests with dates:', requestsWithDates);
+      return requestsWithDates;
+    } catch (error) {
+      console.error('LocalStorageService: Error in getAllRequests:', error);
+      return [];
+    }
   }
 
   static getRequestsForUser(userId: string): ReimbursementRequest[] {
@@ -91,8 +122,10 @@ export class LocalStorageService {
 
   // Demo data initialization
   static initializeDemoData(): void {
+    console.log('LocalStorageService: initializeDemoData called');
     // Only initialize if no data exists
     if (this.getAllRequests().length === 0) {
+      console.log('LocalStorageService: No requests found, initializing demo data');
       const demoRequests: ReimbursementRequest[] = [
         {
           id: 'demo1',
@@ -117,6 +150,9 @@ export class LocalStorageService {
       ];
 
       localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(demoRequests));
+      console.log('LocalStorageService: Demo data initialized');
+    } else {
+      console.log('LocalStorageService: Requests already exist, skipping demo data initialization');
     }
   }
 

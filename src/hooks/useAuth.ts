@@ -1,94 +1,169 @@
-import { useState, useEffect } from 'react';
+import { useReducer, useEffect, useCallback } from 'react';
 import { AuthService } from '../services/authService';
 import { LocalStorageService } from '../services/localStorageService';
 import { User } from '../types';
 
+interface AuthState {
+  isAuthenticated: boolean;
+  currentUser: User | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+type AuthAction = 
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_USER'; payload: User }
+  | { type: 'CLEAR_USER' }
+  | { type: 'SET_AUTHENTICATED'; payload: boolean };
+
+const authReducer = (state: AuthState, action: AuthAction): AuthState => {
+  switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    case 'SET_ERROR':
+      return { ...state, error: action.payload };
+    case 'SET_USER':
+      return { ...state, currentUser: action.payload, isAuthenticated: true };
+    case 'CLEAR_USER':
+      return { ...state, currentUser: null, isAuthenticated: false };
+    case 'SET_AUTHENTICATED':
+      return { ...state, isAuthenticated: action.payload };
+    default:
+      return state;
+  }
+};
+
+const initialState: AuthState = {
+  isAuthenticated: false,
+  currentUser: null,
+  isLoading: true,
+  error: null
+};
+
 export const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(authReducer, initialState);
+
+  console.log('useAuth: Hook created/recreated');
+
+  console.log('useAuth: Current state:', state);
+
+  // Track state changes
+  useEffect(() => {
+    console.log('useAuth: State changed:', state);
+  }, [state]);
 
   useEffect(() => {
-    // Initialize demo data on first load
-    LocalStorageService.initializeDemoData();
+    console.log('useAuth: useEffect triggered');
     
     // Check for existing user in localStorage
     const checkAuthState = async () => {
-      setIsLoading(true);
-      setError(null);
+      console.log('useAuth: checkAuthState started');
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
 
       try {
+        // Initialize demo data on first load
+        LocalStorageService.initializeDemoData();
+        
         const user = await AuthService.getCurrentUser();
+        console.log('useAuth: getCurrentUser returned:', user);
         if (user) {
-          setCurrentUser(user);
-          setIsAuthenticated(true);
+          dispatch({ type: 'SET_USER', payload: user });
+          dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+          console.log('useAuth: User authenticated');
         } else {
-          setCurrentUser(null);
-          setIsAuthenticated(false);
+          dispatch({ type: 'CLEAR_USER' });
+          dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+          console.log('useAuth: No user found');
         }
       } catch (err) {
-        setError('Failed to load user data');
-        setCurrentUser(null);
-        setIsAuthenticated(false);
+        console.error('useAuth: Error in checkAuthState:', err);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to load user data' });
+        dispatch({ type: 'CLEAR_USER' });
+        dispatch({ type: 'SET_AUTHENTICATED', payload: false });
       } finally {
-        setIsLoading(false);
+        dispatch({ type: 'SET_LOADING', payload: false });
+        console.log('useAuth: checkAuthState completed, isLoading set to false');
       }
     };
 
-    checkAuthState();
+    // Add a timeout to ensure isLoading gets set to false
+    const timeoutId = setTimeout(() => {
+      console.log('useAuth: Timeout reached, forcing isLoading to false');
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }, 3000); // 3 second timeout
+
+    checkAuthState().finally(() => {
+      clearTimeout(timeoutId);
+    });
   }, []);
 
-  const signInAsGuest = async (email: string, name: string) => {
-    setIsLoading(true);
-    setError(null);
+  const signInAsGuest = useCallback(async (email: string, name: string) => {
+    console.log('useAuth: signInAsGuest called with:', { email, name });
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
+      console.log('useAuth: calling AuthService.signInAsGuest...');
       const user = await AuthService.signInAsGuest(email, name);
-      setCurrentUser(user);
-      setIsAuthenticated(true);
+      console.log('useAuth: AuthService.signInAsGuest returned:', user);
+      
+      // Use state update functions to ensure changes are detected
+      dispatch({ type: 'SET_USER', payload: user });
+      dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+      console.log('useAuth: Authentication state updated - isAuthenticated set to true');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in');
+      console.error('useAuth: Error in signInAsGuest:', err);
+      dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Failed to sign in' });
     } finally {
-      setIsLoading(false);
+      dispatch({ type: 'SET_LOADING', payload: false });
+      console.log('useAuth: signInAsGuest completed, isLoading set to false');
     }
-  };
+  }, []);
 
-  const signInAsTreasurer = async (email: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
+  const signInAsTreasurer = useCallback(async (email: string, password: string) => {
+    console.log('useAuth: signInAsTreasurer called with:', { email, password });
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
+      console.log('useAuth: calling AuthService.signInAsTreasurer...');
       const user = await AuthService.signInAsTreasurer(email, password);
-      setCurrentUser(user);
-      setIsAuthenticated(true);
+      console.log('useAuth: AuthService.signInAsTreasurer returned:', user);
+      
+      // Use state update functions to ensure changes are detected
+      dispatch({ type: 'SET_USER', payload: user });
+      dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+      console.log('useAuth: Authentication state updated - isAuthenticated set to true');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in');
+      console.error('useAuth: Error in signInAsTreasurer:', err);
+      dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Failed to sign in' });
     } finally {
-      setIsLoading(false);
+      dispatch({ type: 'SET_LOADING', payload: false });
+      console.log('useAuth: signInAsTreasurer completed, isLoading set to false');
     }
-  };
+  }, []);
 
   const signOut = async () => {
-    setIsLoading(true);
-    setError(null);
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
       await AuthService.signOutUser();
-      setCurrentUser(null);
-      setIsAuthenticated(false);
+      dispatch({ type: 'CLEAR_USER' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign out');
+      dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Failed to sign out' });
     } finally {
-      setIsLoading(false);
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
   return {
-    isAuthenticated,
-    currentUser,
-    isLoading,
-    error,
+    isAuthenticated: state.isAuthenticated,
+    currentUser: state.currentUser,
+    isLoading: state.isLoading,
+    error: state.error,
     signInAsGuest,
     signInAsTreasurer,
     signOut

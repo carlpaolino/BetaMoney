@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../hooks/AuthContext';
 import { TREASURER_CREDENTIALS } from '../constants';
 
 const Login: React.FC = () => {
@@ -8,19 +8,29 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showTreasurerLogin, setShowTreasurerLogin] = useState(false);
 
-  const { signInAsGuest, signInAsTreasurer, isLoading, error } = useAuth();
+  const { signInAsGuest, signInAsTreasurer, isLoading, error } = useAuthContext();
 
   const handleGuestLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Guest login form submitted:', { email, name });
     if (email && name) {
+      console.log('Calling signInAsGuest...');
       await signInAsGuest(email, name);
+      console.log('signInAsGuest completed');
+    } else {
+      console.log('Missing email or name');
     }
   };
 
   const handleTreasurerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Treasurer login form submitted:', { email, password });
     if (email && password) {
+      console.log('Calling signInAsTreasurer...');
       await signInAsTreasurer(email, password);
+      console.log('signInAsTreasurer completed');
+    } else {
+      console.log('Missing email or password');
     }
   };
 
@@ -56,6 +66,11 @@ const Login: React.FC = () => {
             {error}
           </div>
         )}
+
+        {/* Debug info */}
+        <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px', padding: '5px', backgroundColor: '#f0f0f0' }}>
+          Debug: email="{email}", name="{name}", password="{password}", isLoading={isLoading.toString()}
+        </div>
 
         {!showTreasurerLogin ? (
           <form onSubmit={handleGuestLogin}>

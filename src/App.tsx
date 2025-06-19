@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from './hooks/useAuth';
+import { AuthProvider, useAuthContext } from './hooks/AuthContext';
 import Login from './components/Login';
 import RequestsList from './components/RequestsList';
 import NewRequest from './components/NewRequest';
@@ -7,8 +7,8 @@ import RequestDetail from './components/RequestDetail';
 import { ReimbursementRequest } from './types';
 import './styles/App.css';
 
-function App() {
-  const { isAuthenticated, isLoading } = useAuth();
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuthContext();
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ReimbursementRequest | null>(null);
 
@@ -76,4 +76,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
