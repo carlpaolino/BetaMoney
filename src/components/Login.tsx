@@ -67,11 +67,6 @@ const Login: React.FC = () => {
           </div>
         )}
 
-        {/* Debug info */}
-        <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px', padding: '5px', backgroundColor: '#f0f0f0' }}>
-          Debug: email="{email}", name="{name}", password="{password}", isLoading={isLoading.toString()}
-        </div>
-
         {!showTreasurerLogin ? (
           <form onSubmit={handleGuestLogin}>
             <div className="form-group">
@@ -93,7 +88,7 @@ const Login: React.FC = () => {
                 className="form-input"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
+                placeholder="chmike"
                 required
               />
             </div>
