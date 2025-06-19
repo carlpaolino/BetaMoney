@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { LocalStorageService } from '../services/localStorageService';
+import { SupabaseService } from '../services/SupabaseService';
 import { ReimbursementRequest, RequestStatus, UserRole } from '../types';
 import { formatCurrency, formatDateLong } from '../utils/formatters';
 
@@ -22,7 +22,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onReque
     setIsUpdating(true);
 
     try {
-      LocalStorageService.updateRequestStatus(currentRequest.id, newStatus);
+      await SupabaseService.updateRequestStatus(currentRequest.id, newStatus);
       const updatedRequest = { ...currentRequest, status: newStatus, updatedAt: new Date() };
       setCurrentRequest(updatedRequest);
       onRequestUpdated(updatedRequest);

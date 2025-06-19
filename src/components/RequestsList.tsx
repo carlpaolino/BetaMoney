@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { LocalStorageService } from '../services/localStorageService';
+import { SupabaseService } from '../services/SupabaseService';
 import { ReimbursementRequest, RequestStatus, UserRole } from '../types';
 import { formatCurrency, formatDateShort } from '../utils/formatters';
 
@@ -19,14 +19,12 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
   useEffect(() => {
     if (!currentUser) return;
 
-    const loadRequests = () => {
+    const loadRequests = async () => {
       setIsLoading(true);
-      
       try {
-        const allRequests = currentUser.role === UserRole.OWNER 
-          ? LocalStorageService.getAllRequests()
-          : LocalStorageService.getRequestsForUser(currentUser.id);
-        
+        const allRequests = currentUser.role === UserRole.OWNER
+          ? await SupabaseService.getAllRequests()
+          : await SupabaseService.getRequestsForUser(currentUser.id);
         setRequests(allRequests);
       } catch (error) {
         console.error('Error loading requests:', error);
@@ -36,8 +34,6 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
     };
 
     loadRequests();
-
-    // Set up polling to refresh data every 5 seconds (simulates real-time updates)
     const interval = setInterval(loadRequests, 5000);
     return () => clearInterval(interval);
   }, [currentUser]);

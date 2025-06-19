@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { LocalStorageService } from '../services/localStorageService';
+import { SupabaseService } from '../services/SupabaseService';
 import { ReimbursementRequest, RequestStatus } from '../types';
 import { validateNewRequest } from '../utils/validators';
 import { BETA_COMMITTEES } from '../constants';
@@ -55,10 +55,21 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
 
     try {
       // Generate request ID
-      const requestId = LocalStorageService.generateId();
+      const requestId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 
-      // Convert image to base64 for storage
-      const imageURL = await LocalStorageService.saveImage(selectedFile);
+      // Convert image to base64 for storage (keep as is for now)
+      const imageURL = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result);
+          } else {
+            reject(new Error('Failed to convert file to base64'));
+          }
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(selectedFile);
+      });
 
       // Create request object
       const request: ReimbursementRequest = {
@@ -73,8 +84,8 @@ const NewRequest: React.FC<NewRequestProps> = ({ onClose, onSuccess }) => {
         updatedAt: new Date()
       };
 
-      // Save to localStorage
-      LocalStorageService.saveRequest(request);
+      // Save to Supabase
+      await SupabaseService.saveRequest(request);
 
       onSuccess();
     } catch (err) {
