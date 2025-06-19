@@ -159,14 +159,6 @@ const Login: React.FC = () => {
         >
           {showTreasurerLogin ? 'Member Login' : 'Treasurer Login'}
         </button>
-
-        {showTreasurerLogin && (
-          <div className="demo-credentials">
-            <p><strong>Demo Credentials:</strong></p>
-            <p>{TREASURER_CREDENTIALS.EMAIL}</p>
-            <p>{TREASURER_CREDENTIALS.PASSWORD}</p>
-          </div>
-        )}
       </div>
     </div>
   );

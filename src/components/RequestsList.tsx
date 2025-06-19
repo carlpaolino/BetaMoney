@@ -59,6 +59,11 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
     return currentUser?.role === UserRole.OWNER ? 'All Requests' : 'My Requests';
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.reload(); // Fallback to force UI update to login page
+  };
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -78,7 +83,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ onNewRequest, onViewRequest
               +
             </button>
           )}
-          <button className="btn btn-danger" onClick={signOut}>
+          <button className="btn btn-danger" onClick={handleSignOut}>
             Sign Out
           </button>
         </div>
